@@ -1,5 +1,11 @@
-import { Button, Form, Input } from "antd";
+import { useState } from "react";
+
 import { useNavigate } from "react-router";
+import { Button, Form, Input, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+
+import { login } from "../../api/mockData";
+import { SigninDTO } from "../../model/types";
 
 type FieldType = {
   email: string;
@@ -7,9 +13,25 @@ type FieldType = {
 };
 
 export const SinginScreen = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const navigate = useNavigate();
 
-  const sumbitHandler = (values: FieldType) => {
+  const getData = async ({ email, password }: FieldType) => {
+    setIsLoading(true);
+    try {
+      const response = await login(email, password);
+      const data: SigninDTO = await response.json();
+      localStorage.setItem("token", data.data.token);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sumbitHandler = async (fields: FieldType) => {
+    await getData(fields);
     navigate("/profile");
   };
 
@@ -37,7 +59,15 @@ export const SinginScreen = () => {
         <Input placeholder="Password" />
       </Form.Item>
       <Form.Item label={null}>
-        <Button type="primary" htmlType="submit">
+        <Button
+          type="primary"
+          htmlType="submit"
+          icon={
+            isLoading && (
+              <Spin indicator={<LoadingOutlined spin />} size="small" />
+            )
+          }
+        >
           Submit
         </Button>
       </Form.Item>
